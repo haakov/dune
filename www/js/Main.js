@@ -32,6 +32,8 @@ function Main(root_id)
     this.create('Main', root_id);
     this.createHeader('Overview');
     this.createTable();
+    this.createHeader('Map');
+    this.createMap();
     this.createHeader('Tasks');
     this.createTableTasks();
 };
@@ -135,6 +137,15 @@ Main.prototype.createTableTasks = function()
     this.m_base.appendChild(div);
 };
 
+Main.prototype.createMap = function()
+{
+    var mapid = document.createElement('div');
+    mapid.id = 'map';
+    this.map_initialized = false;
+
+    this.m_base.appendChild(mapid);
+};
+
 Main.prototype.createTableEntry = function(idx, tbl)
 {
     var field = this.m_fields[idx];
@@ -158,6 +169,29 @@ Main.prototype.createTableEntry = function(idx, tbl)
 
 Main.prototype.update = function()
 {
+    if (g_data != null && !this.map_initialized)
+    {
+        var msg = findMessage(g_data, 'GpsFix');
+        var lat = (180/3.14) * msg.lat;
+        var lon = (180/3.14) * msg.lon;
+        this.map = L.map('map').setView([lat, lon], 13);
+        this.marker = L.marker([lat, lon]).addTo(this.map);
+
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(this.map);
+
+        this.map_initialized = true;
+    }
+
+    if (this.map_initialized){
+        var msg = findMessage(g_data, 'GpsFix');
+        var lat = (180/3.14) * msg.lat;
+        var lon = (180/3.14) * msg.lon;
+        this.marker.setLatLng([lat, lon]);
+    }
+
     for (i in this.m_fields)
     {
         var value = null;
