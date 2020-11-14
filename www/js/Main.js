@@ -175,7 +175,7 @@ Main.prototype.update = function()
         var lat = (180/3.14) * msg.lat;
         var lon = (180/3.14) * msg.lon;
         this.map = L.map('map').setView([lat, lon], 13);
-        this.marker = L.marker([lat, lon]).addTo(this.map);
+        this.marker = L.marker([lat, lon], {rotationAngle: 45}).addTo(this.map);
 
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
