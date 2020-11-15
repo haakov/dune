@@ -19,10 +19,10 @@ defmodule Elixir_srv.Server do
         List.first(conn.path_info) == "delete" ->
           String.slice(conn.request_path, 7..-1) |>
           File.rm_rf
-          send_resp(conn, 200, "done")
+          send_resp(conn, 200, "OK")
 
         true ->
-          send_resp(conn, 404, "sorry")
+          send_resp(conn, 404, "Not Found")
       end
     end
 end
