@@ -174,8 +174,9 @@ Main.prototype.update = function()
         var msg = findMessage(g_data, 'GpsFix');
         var lat = (180/3.14) * msg.lat;
         var lon = (180/3.14) * msg.lon;
+        var cog = (180/3.14) * msg.cog;
         this.map = L.map('map').setView([lat, lon], 13);
-        this.marker = L.marker([lat, lon], {rotationAngle: 45}).addTo(this.map);
+        this.marker = L.marker([lat, lon], {rotationAngle: cog}).addTo(this.map);
 
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -189,7 +190,9 @@ Main.prototype.update = function()
         var msg = findMessage(g_data, 'GpsFix');
         var lat = (180/3.14) * msg.lat;
         var lon = (180/3.14) * msg.lon;
+        var cog = (180/3.14) * msg.cog;
         this.marker.setLatLng([lat, lon]);
+        this.marker.setRotationAngle(cog);
     }
 
     for (i in this.m_fields)
