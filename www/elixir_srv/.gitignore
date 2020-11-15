@@ -24,3 +24,6 @@ example-*.tar
 
 # Visual Studio Code files
 .vscode
+
+# Mix lock file
+mix.lock
