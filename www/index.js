@@ -35,6 +35,7 @@ var g_data = null;
 var g_dune_logs = null;
 var g_dune_logbook = null;
 var g_logbook_timer = null;
+var g_logs_timer = null;
 
 window.onload = function()
 {
@@ -50,7 +51,7 @@ function requestLogBookEntries() {
     options.timeout = 10000;
     options.timeoutHandler = timeoutHandler;
     options.errorHandler = errorHandler;
-    HTTP.get('dune/state/logbook.js', handleLogBookEntries, options);
+    HTTP.get('state/logbook.js', handleLogBookEntries, options);
 }
 
 function handleLogBookEntries(text)
@@ -69,13 +70,17 @@ function requestLogs()
     options.timeout = 10000;
     options.timeoutHandler = timeoutHandler;
     options.errorHandler = errorHandler;
-    HTTP.get('dune/logs/list.js', handleLogs, options);
+    HTTP.get('state/logs.js', handleLogs, options);
 };
 
 function handleLogs(text)
 {
+    if (g_logs_timer == null)
+	g_logs_timer = setInterval(requestLogs, 4000);
+	
     eval(text);
-    g_dune_logs = dune_logs;
+    g_dune_logs = logs.dune_logs;
+    g_sections.update();
 };
 
 function setConnected(value)
@@ -111,7 +116,7 @@ function requestData()
     options.timeout = 10000;
     options.timeoutHandler = timeoutHandler;
     options.errorHandler = errorHandler;
-    HTTP.get('dune/state/messages.js', handleData, options);
+    HTTP.get('state/messages.js', handleData, options);
 };
 
 function handleData(text)

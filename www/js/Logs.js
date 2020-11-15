@@ -30,29 +30,6 @@
 function Logs(root_id)
 {
     this.create('Logs', root_id);
-    this.m_tbl = document.createElement('table');
-
-    var ldr = document.createElement('table');
-    ldr.marginLeft = 'auto';
-    ldr.marginRight = 'auto';
-
-    var tr = document.createElement('tr');
-    var td = document.createElement('td');
-
-    var img = document.createElement('img');
-    img.marginLeft = 'auto';
-    img.marginRight = 'auto';
-    img.src = 'images/progress.gif';
-    td.appendChild(img);
-    td.appendChild(document.createElement('br'));
-    td.appendChild(document.createTextNode('Loading...'));
-
-    ldr.appendChild(tr);
-    tr.appendChild(td);
-
-    this.m_base.appendChild(ldr);
-
-    this.m_base.appendChild(this.m_tbl);
 
 };
 
@@ -63,32 +40,52 @@ Logs.prototype.update = function()
     if (!g_dune_logs)
         return;
 
-    for (var i in g_dune_logs)
+    while (this.m_base.hasChildNodes())
     {
-        var r = this.createFolder(i, g_dune_logs[i]);
-        this.m_tbl.appendChild(r);
+        this.m_base.removeChild(this.m_base.lastChild);
     }
 
-    // var ul = document.createElement('ul');
-    // for (var i in g_dune_logs)
-    // {
-    //     var li = document.createElement('li');
-    //     li.appendChild(document.createTextNode(i));
-    //     ul.appendChild(li);
+    for (var i in g_dune_logs)
+    {
+        var m_tbl = document.createElement('table');
+        var th = document.createElement('th');
+        var dirs = g_dune_logs[i].date.split("/");
+        var date = dirs[dirs.length-1];
+        date = date.substring(0, 4) + "-" + date.substring(4, 6) + "-" + date.substring(6, 8);
+        th.appendChild(document.createTextNode(date));
+        th.colSpan = 4;
+        var tr1 = document.createElement('tr');
+        tr1.appendChild(th);
+        m_tbl.appendChild(tr1);
 
-    //     var cul = document.createElement('ul');
-    //     for (var j in g_dune_logs[i])
-    //     {
-    //         var cli = document.createElement('li');
-    //         cli.appendChild(document.createTextNode(g_dune_logs[i][j].file));
-    //         cul.appendChild(cli);
-    //     }
-    //     li.appendChild(cul);
-    // }
 
-    // this.m_base.appendChild(ul);
+        for (var j in g_dune_logs[i].times)
+        {
+            var dirs = g_dune_logs[i].times[j].time.split("/");
+            var time = dirs[dirs.length-1];
+            time = time.substring(0, 2) + ":" + time.substring(2, 4) + ":" + time.substring(4, 6);
 
-    g_dune_logs = null;
+            var tr2 = document.createElement('tr');
+            var td1 = document.createElement('td');
+            td1.appendChild(document.createTextNode(time));
+            var td2 = document.createElement('td');
+            td2.appendChild(document.createTextNode(g_dune_logs[i].times[j].size));
+            var td3 = document.createElement('td');
+
+            // Delete button.
+            var btn = document.createElement('input');
+            btn.type = 'button';
+            var curr_date
+            btn.onclick = requestFileDeletion.bind(this, [i, j]);
+            btn.value = 'Delete';
+            td3.appendChild(btn);
+            tr2.appendChild(td1);
+            tr2.appendChild(td2);
+            tr2.appendChild(td3);
+            m_tbl.appendChild(tr2);
+        }
+        this.m_base.appendChild(m_tbl);
+    }
 };
 
 Logs.prototype.createFolder = function(root, tree)
@@ -113,3 +110,14 @@ Logs.prototype.createFile = function(root)
     li.appendChild(document.createTextNode(i));
     ul.appendChild(li);
 };
+
+function requestFileDeletion(args, event)
+{
+    var url = 'delete' + g_dune_logs[args[0]].times[args[1]].time.replace('"','').replace('\"', '');
+
+    var options = Array();
+    options.timeout = 10000;
+    options.timeoutHandler = null;
+    options.errorHandler = null;
+    HTTP.get(url, handlePower, options);
+}

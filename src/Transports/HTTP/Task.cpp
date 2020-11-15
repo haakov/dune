@@ -89,7 +89,7 @@ namespace Transports
         Tasks::Task(name, ctx),
         RequestHandler(),
         m_server(NULL),
-        m_msg_mon(getSystemName(), ctx.uid, ctx.dir_www)
+        m_msg_mon(getSystemName(), ctx.uid, ctx.dir_www, ctx.dir_log)
       {
         // Define configuration parameters.
         param("Port", m_args.port)

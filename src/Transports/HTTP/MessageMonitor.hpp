@@ -35,6 +35,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -46,7 +47,7 @@ namespace Transports
     class MessageMonitor
     {
     public:
-      MessageMonitor(const std::string& system, uint64_t uid, DUNE::FileSystem::Path dir_www);
+      MessageMonitor(const std::string& system, uint64_t uid, DUNE::FileSystem::Path dir_www, DUNE::FileSystem::Path dir_log);
 
       ~MessageMonitor(void);
 
@@ -58,6 +59,9 @@ namespace Transports
 
       std::string
       logbookJSON(void);
+
+      std::string
+      logsJSON(void);
 
       void
       addLogEntry(const DUNE::IMC::LogBookEntry* msg);
@@ -111,7 +115,9 @@ namespace Transports
       // The files to write to
       std::ofstream m_msg_file;
       std::ofstream m_lbook_file;
+      std::ofstream m_logs_file;
       DUNE::FileSystem::Path m_dir_www;
+      DUNE::FileSystem::Path m_dir_log;
 
       void
       updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);

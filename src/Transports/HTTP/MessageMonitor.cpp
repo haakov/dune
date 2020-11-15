@@ -33,18 +33,21 @@
 // Local headers.
 #include "MessageMonitor.hpp"
 
+namespace fs = std::filesystem;
+
 namespace Transports
 {
   namespace HTTP
   {
     using DUNE_NAMESPACES;
 
-    MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid, DUNE::FileSystem::Path dir_www):
+    MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid, DUNE::FileSystem::Path dir_www, DUNE::FileSystem::Path dir_log):
       m_uid(uid),
       m_last_msgs_json(0),
       m_last_logbook_json(0),
       m_log_entry(100),
-      m_dir_www(dir_www)
+      m_dir_www(dir_www),
+      m_dir_log(dir_log)
     {
       // Initialize meta information.
       std::ostringstream os;
@@ -160,8 +163,71 @@ namespace Transports
         m_lbook_file.open(m_dir_www.str() + "/state/logbook.js", std::ios::out);
         m_lbook_file << logbookJSON();
         m_lbook_file.close();
+        m_logs_file.open(m_dir_www.str() + "/state/logs.js", std::ios::out);
+        m_logs_file << logsJSON();
+        m_logs_file.close();
+
         m_last_wrote = now;
       }
+    }
+
+    std::string
+    MessageMonitor::logsJSON(void)
+    {
+      ScopedMutex l(m_mutex);
+
+      std::ostringstream os;
+
+      os << "var logs = {\n"
+         <<"'dune_logs': [\n";
+
+      for (const auto & date : fs::directory_iterator(m_dir_log.str()))
+      {
+        if (fs::is_empty(date.path()))
+        {
+          std::cout << date.path() << " is empty!" << std::endl;
+          continue;
+        }
+        os << "{\n" << "  'date': '" << date << "',\n";
+        os << "  'times': \n  [\n";
+        for (const auto & time : fs::directory_iterator(date.path()))
+        {
+          double size = 0.0;
+
+          for (const auto & file : fs::directory_iterator(time.path()))
+          {
+            size += fs::file_size(file);
+          }
+
+          std::string postfix;
+          if (size > 1000000000)
+          {
+            size = size / 1000000000;
+            postfix = " GB";
+          }
+          else if (size > 1000000)
+          {
+            size = size / 1000000;
+            postfix = " MB";
+          }
+          else if (size > 1000)
+          {
+            size = size / 1000;
+            postfix = " KB";
+          }
+          else
+          {
+            postfix = " B";
+          }
+          os << "    {'time': '" << time << "', 'size': '" << std::setprecision(3) << size << postfix << "'},\n";
+        }
+        os << "  ]\n},\n";
+      }
+
+      os << "\n]"
+         << "\n};";
+
+      return os.str();
     }
 
     std::string
