@@ -3,6 +3,7 @@ defmodule Elixir_srv.Application do
   require Logger
 
   def start(_type, _args) do
+    File.mkdir("../state")
     children = [
       {Plug.Cowboy, scheme: :http, plug: Elixir_srv.Server, options: [port: 8080]}
     ]
