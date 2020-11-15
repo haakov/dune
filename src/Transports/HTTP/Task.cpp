@@ -122,7 +122,8 @@ namespace Transports
           try
           {
             inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
-            fpipe = (FILE*) popen("cd /home/hkon/ttk22/dune/source/www/example; iex -S mix", "r");
+            std::string cmd = "cd " + m_ctx.dir_www.str() + "/elixir_srv; iex -S mix";
+            fpipe = (FILE*) popen(cmd.c_str(), "r");
 
 
             // Initialize and dispatch AnnounceService.
