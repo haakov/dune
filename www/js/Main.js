@@ -27,6 +27,12 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+var gpsMarker = L.icon({
+    iconUrl: '../images/marker.png',
+
+    iconSize:     [16, 16], // size of the icon
+});
+
 function Main(root_id)
 {
     this.create('Main', root_id);
@@ -176,7 +182,7 @@ Main.prototype.update = function()
         var lon = (180/3.14) * msg.lon;
         var cog = (180/3.14) * msg.cog;
         this.map = L.map('map').setView([lat, lon], 13);
-        this.marker = L.marker([lat, lon], {rotationAngle: cog}).addTo(this.map);
+        this.marker = L.marker([lat, lon], {icon: gpsMarker, rotationAngle: cog}).addTo(this.map);
 
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
