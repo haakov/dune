@@ -35,6 +35,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cstddef>
+#include <stdio.h>
+#include <stdlib.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -80,12 +82,14 @@ namespace Transports
       MessageMonitor m_msg_mon;
       //! Task arguments.
       Arguments m_args;
+      //! Server pipe
+      FILE* fpipe;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         RequestHandler(),
         m_server(NULL),
-        m_msg_mon(getSystemName(), ctx.uid)
+        m_msg_mon(getSystemName(), ctx.uid, ctx.dir_www)
       {
         // Define configuration parameters.
         param("Port", m_args.port)
@@ -118,7 +122,8 @@ namespace Transports
           try
           {
             inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
-            m_server = new Server(port, m_args.threads, *this);
+            fpipe = (FILE*) popen("cd /home/hkon/ttk22/dune/source/www/example; iex -S mix", "r");
+
 
             // Initialize and dispatch AnnounceService.
             std::vector<Interface> itfs = Interface::get();
@@ -151,7 +156,6 @@ namespace Transports
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_server);
       }
 
       void
@@ -336,8 +340,8 @@ namespace Transports
         hdr["Content-Type"] = "text/javascript";
         hdr["Content-Encoding"] = "gzip";
 
-        ByteBuffer* bfr = m_msg_mon.messagesJSON();
-        sendData(sock, bfr->getBufferSigned(), bfr->getSize(), &hdr);
+        //ByteBuffer* bfr = m_msg_mon.messagesJSON();
+        //sendData(sock, bfr->getBufferSigned(), bfr->getSize(), &hdr);
       }
 
       void
@@ -350,8 +354,8 @@ namespace Transports
         hdr["Content-Type"] = "text/javascript";
         hdr["Content-Encoding"] = "gzip";
 
-        ByteBuffer* bfr = m_msg_mon.logbookJSON();
-        sendData(sock, bfr->getBufferSigned(), bfr->getSize(), &hdr);
+        //ByteBuffer* bfr = m_msg_mon.logbookJSON();
+        //sendData(sock, bfr->getBufferSigned(), bfr->getSize(), &hdr);
       }
 
       void
@@ -454,7 +458,6 @@ namespace Transports
         while (!stopping())
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_server->poll(1.0);
           consumeMessages();
         }
       }

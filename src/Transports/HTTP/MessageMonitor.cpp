@@ -39,11 +39,12 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-    MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid):
+    MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid, DUNE::FileSystem::Path dir_www):
       m_uid(uid),
       m_last_msgs_json(0),
       m_last_logbook_json(0),
-      m_log_entry(100)
+      m_log_entry(100),
+      m_dir_www(dir_www)
     {
       // Initialize meta information.
       std::ostringstream os;
@@ -53,6 +54,7 @@ namespace Transports
          << "  'dune_time_start': '" << std::setprecision(12) << Clock::getSinceEpoch() << "',\n"
          << "  'dune_system': '" << system << "',\n";
       m_meta = os.str();
+      m_last_wrote = Clock::getMsec();
     }
 
     MessageMonitor::~MessageMonitor(void)
@@ -74,6 +76,8 @@ namespace Transports
         for(unsigned int itr = 0; itr < m_logbook.size(); ++itr)
           delete m_logbook[itr];
       }
+      m_msg_file.close();
+      m_lbook_file.close();
     }
 
     void
@@ -83,20 +87,10 @@ namespace Transports
       m_entities = entities;
     }
 
-    ByteBuffer*
+    std::string
     MessageMonitor::messagesJSON(void)
     {
       ScopedMutex l(m_mutex);
-
-      uint64_t now = Clock::getMsec();
-
-      if ((now - m_last_msgs_json) > 2000)
-        m_last_msgs_json = now;
-      else
-        return &m_msgs_json;
-
-      if (m_msgs.empty())
-        return &m_msgs_json;
 
       std::ostringstream os;
       os << m_meta
@@ -138,17 +132,13 @@ namespace Transports
       os << "\n]"
          << "\n};";
 
-      GzipCompressor cmp;
-      std::string str = os.str();
-      cmp.compress(m_msgs_json, (char*)str.c_str(), (unsigned long)str.size());
-
-      return &m_msgs_json;
+      return os.str();
     }
 
     void
     MessageMonitor::updateMessage(const IMC::Message* msg)
     {
-      ScopedMutex l(m_mutex);
+      //ScopedMutex l(m_mutex);
 
       if (msg->getId() == DUNE_IMC_POWERCHANNELSTATE)
         updatePowerChannel(static_cast<const IMC::PowerChannelState*>(msg));
@@ -160,23 +150,24 @@ namespace Transports
         delete m_msgs[key];
 
       m_msgs[key] = tmsg;
+
+      uint64_t now = Clock::getMsec();
+      if (now - m_last_wrote  > 2000)
+      {
+        m_msg_file.open(m_dir_www.str() + "/state/messages.js", std::ios::out);
+        m_msg_file << messagesJSON();
+        m_msg_file.close();
+        m_lbook_file.open(m_dir_www.str() + "/state/logbook.js", std::ios::out);
+        m_lbook_file << logbookJSON();
+        m_lbook_file.close();
+        m_last_wrote = now;
+      }
     }
 
-    ByteBuffer*
+    std::string
     MessageMonitor::logbookJSON(void)
     {
       ScopedMutex l(m_mutex);
-
-      uint64_t now = Clock::getMsec();
-
-      if ((now - m_last_logbook_json) < 2000)
-        return &m_logbook_json;
-      else
-        m_last_logbook_json = now;
-
-      // Update m_logbook_json
-      if (m_logbook.empty())
-        return &m_logbook_json;
 
       std::ostringstream os;
       unsigned int itr = 0;
@@ -195,12 +186,7 @@ namespace Transports
       os << "\n]"
          << "\n};";
 
-      // gzip compress
-      GzipCompressor cmp;
-      std::string str = os.str();
-      cmp.compress(m_logbook_json, (char*)str.c_str(), (unsigned long)str.size());
-
-      return &m_logbook_json;
+      return os.str();
     }
 
     void

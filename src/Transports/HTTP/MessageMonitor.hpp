@@ -33,6 +33,8 @@
 // ISO C++ 98 headers.
 #include <map>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -44,17 +46,17 @@ namespace Transports
     class MessageMonitor
     {
     public:
-      MessageMonitor(const std::string& system, uint64_t uid);
+      MessageMonitor(const std::string& system, uint64_t uid, DUNE::FileSystem::Path dir_www);
 
       ~MessageMonitor(void);
 
       void
       setEntities(const std::map<unsigned, std::string>& entities);
 
-      DUNE::Utils::ByteBuffer*
+      std::string
       messagesJSON(void);
 
-      DUNE::Utils::ByteBuffer*
+      std::string
       logbookJSON(void);
 
       void
@@ -104,6 +106,12 @@ namespace Transports
       uint64_t m_last_logbook_json;
       // Number of logbook messages to show.
       unsigned int m_log_entry;
+      // Last time we wrote messages to file
+      uint64_t m_last_wrote;
+      // The files to write to
+      std::ofstream m_msg_file;
+      std::ofstream m_lbook_file;
+      DUNE::FileSystem::Path m_dir_www;
 
       void
       updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);
